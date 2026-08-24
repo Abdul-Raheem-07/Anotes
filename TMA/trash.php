@@ -1,32 +1,49 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/auth.php';
+
+// This whole page is private - bounce to login.php if not authenticated.
+require_login();
 
 /**
  * Trash holds soft-deleted notes & reminders for 7 days (auto-purge
  * runs in includes/db.php on every request). From here you can
  * Restore an item or delete it permanently right away.
+ *
+ * Every query below is scoped to the logged-in user, so nobody can
+ * restore/purge/view another user's trashed items by editing the
+ * id in the URL.
  */
+$userId = current_user_id();
 
 // ---- Restore ----
 if (isset($_GET['restore_note'])) {
     $sno = (int) $_GET['restore_note'];
-    $stmt = mysqli_prepare($conn, "UPDATE `notes` SET `deleted_at` = NULL WHERE `sno` = ?");
-    mysqli_stmt_bind_param($stmt, "i", $sno);
+    $stmt = mysqli_prepare($conn, "UPDATE `notes` SET `deleted_at` = NULL WHERE `sno` = ? AND `user_id` = ?");
+    mysqli_stmt_bind_param($stmt, "ii", $sno, $userId);
     mysqli_stmt_execute($stmt);
+    if (mysqli_stmt_affected_rows($stmt) > 0) {
+        $_SESSION['flash'] = ['type' => 'success', 'text' => '<strong>Restored!</strong> Note is back in your notes list.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'warning', 'text' => 'That note could not be found.'];
+    }
     mysqli_stmt_close($stmt);
-    $_SESSION['flash'] = ['type' => 'success', 'text' => '<strong>Restored!</strong> Note is back in your notes list.'];
     header("Location: trash.php");
     exit;
 }
 
 if (isset($_GET['restore_reminder'])) {
     $id = (int) $_GET['restore_reminder'];
-    $stmt = mysqli_prepare($conn, "UPDATE `reminders` SET `deleted_at` = NULL WHERE `id` = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id);
+    $stmt = mysqli_prepare($conn, "UPDATE `reminders` SET `deleted_at` = NULL WHERE `id` = ? AND `user_id` = ?");
+    mysqli_stmt_bind_param($stmt, "ii", $id, $userId);
     mysqli_stmt_execute($stmt);
+    if (mysqli_stmt_affected_rows($stmt) > 0) {
+        $_SESSION['flash'] = ['type' => 'success', 'text' => '<strong>Restored!</strong> Reminder is back in your reminders list.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'warning', 'text' => 'That reminder could not be found.'];
+    }
     mysqli_stmt_close($stmt);
-    $_SESSION['flash'] = ['type' => 'success', 'text' => '<strong>Restored!</strong> Reminder is back in your reminders list.'];
     header("Location: trash.php");
     exit;
 }
@@ -34,22 +51,30 @@ if (isset($_GET['restore_reminder'])) {
 // ---- Permanent delete (right now, doesn't wait for 7 days) ----
 if (isset($_GET['purge_note'])) {
     $sno = (int) $_GET['purge_note'];
-    $stmt = mysqli_prepare($conn, "DELETE FROM `notes` WHERE `sno` = ? AND `deleted_at` IS NOT NULL");
-    mysqli_stmt_bind_param($stmt, "i", $sno);
+    $stmt = mysqli_prepare($conn, "DELETE FROM `notes` WHERE `sno` = ? AND `user_id` = ? AND `deleted_at` IS NOT NULL");
+    mysqli_stmt_bind_param($stmt, "ii", $sno, $userId);
     mysqli_stmt_execute($stmt);
+    if (mysqli_stmt_affected_rows($stmt) > 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'text' => '<strong>Deleted!</strong> Note removed permanently.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'warning', 'text' => 'That note could not be found.'];
+    }
     mysqli_stmt_close($stmt);
-    $_SESSION['flash'] = ['type' => 'danger', 'text' => '<strong>Deleted!</strong> Note removed permanently.'];
     header("Location: trash.php");
     exit;
 }
 
 if (isset($_GET['purge_reminder'])) {
     $id = (int) $_GET['purge_reminder'];
-    $stmt = mysqli_prepare($conn, "DELETE FROM `reminders` WHERE `id` = ? AND `deleted_at` IS NOT NULL");
-    mysqli_stmt_bind_param($stmt, "i", $id);
+    $stmt = mysqli_prepare($conn, "DELETE FROM `reminders` WHERE `id` = ? AND `user_id` = ? AND `deleted_at` IS NOT NULL");
+    mysqli_stmt_bind_param($stmt, "ii", $id, $userId);
     mysqli_stmt_execute($stmt);
+    if (mysqli_stmt_affected_rows($stmt) > 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'text' => '<strong>Deleted!</strong> Reminder removed permanently.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'warning', 'text' => 'That reminder could not be found.'];
+    }
     mysqli_stmt_close($stmt);
-    $_SESSION['flash'] = ['type' => 'danger', 'text' => '<strong>Deleted!</strong> Reminder removed permanently.'];
     header("Location: trash.php");
     exit;
 }
@@ -69,20 +94,28 @@ function daysLeft($deletedAt) {
 }
 
 $trashedNotes = [];
-$result = mysqli_query($conn, "SELECT * FROM `notes` WHERE `deleted_at` IS NOT NULL ORDER BY `deleted_at` DESC");
+$stmt = mysqli_prepare($conn, "SELECT * FROM `notes` WHERE `deleted_at` IS NOT NULL AND `user_id` = ? ORDER BY `deleted_at` DESC");
+mysqli_stmt_bind_param($stmt, "i", $userId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 if ($result) {
     while ($row = mysqli_fetch_assoc($result)) {
         $trashedNotes[] = $row;
     }
 }
+mysqli_stmt_close($stmt);
 
 $trashedReminders = [];
-$result = mysqli_query($conn, "SELECT * FROM `reminders` WHERE `deleted_at` IS NOT NULL ORDER BY `deleted_at` DESC");
+$stmt = mysqli_prepare($conn, "SELECT * FROM `reminders` WHERE `deleted_at` IS NOT NULL AND `user_id` = ? ORDER BY `deleted_at` DESC");
+mysqli_stmt_bind_param($stmt, "i", $userId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 if ($result) {
     while ($row = mysqli_fetch_assoc($result)) {
         $trashedReminders[] = $row;
     }
 }
+mysqli_stmt_close($stmt);
 
 $pageTitle  = 'Trash';
 $activePage = 'trash';
