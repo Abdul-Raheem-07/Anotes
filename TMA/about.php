@@ -1,4 +1,5 @@
 <?php
+session_start();
 $pageTitle  = 'About';
 $activePage = 'about';
 require_once __DIR__ . '/includes/header.php';

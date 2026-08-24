@@ -4,6 +4,7 @@
  * Reminders tools live on the Home page (index.php) so there's a
  * single source of truth instead of duplicate forms in two places.
  */
+session_start();
 $pageTitle  = 'Services';
 $activePage = 'services';
 require_once __DIR__ . '/includes/header.php';

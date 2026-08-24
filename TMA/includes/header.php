@@ -7,6 +7,21 @@ if (!isset($activePage)) {
 function navClass($page, $active) {
     return $page === $active ? 'nav-link active px-3' : 'nav-link px-3';
 }
+
+// header.php needs to know if someone is logged in to decide which
+// nav links to show. Pages that already required auth.php (protected
+// pages) will have these functions available; public pages that only
+// include header.php get a safe fallback so this never errors out.
+if (!function_exists('is_logged_in')) {
+    function is_logged_in() {
+        return !empty($_SESSION['user_id']);
+    }
+}
+if (!function_exists('current_user_name')) {
+    function current_user_name() {
+        return $_SESSION['user_name'] ?? null;
+    }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -35,7 +50,24 @@ function navClass($page, $active) {
           <li class="nav-item"><a class="<?php echo navClass('about', $activePage); ?>" href="about.php">About</a></li>
           <li class="nav-item"><a class="<?php echo navClass('services', $activePage); ?>" href="services.php">Services</a></li>
           <li class="nav-item"><a class="<?php echo navClass('contact', $activePage); ?>" href="contact.php">Contact</a></li>
-          <li class="nav-item"><a class="<?php echo navClass('trash', $activePage); ?>" href="trash.php"><i class="bi bi-trash3"></i> Trash</a></li>
+          <?php if (is_logged_in()): ?>
+            <li class="nav-item"><a class="<?php echo navClass('trash', $activePage); ?>" href="trash.php"><i class="bi bi-trash3"></i> Trash</a></li>
+          <?php endif; ?>
+        </ul>
+        <ul class="navbar-nav mb-2 mb-lg-0">
+          <?php if (is_logged_in()): ?>
+            <li class="nav-item d-flex align-items-center">
+              <span class="nav-link px-3 text-secondary">
+                <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars(current_user_name()); ?>
+              </span>
+            </li>
+            <li class="nav-item">
+              <a class="<?php echo navClass('logout', $activePage); ?>" href="logout.php">Logout</a>
+            </li>
+          <?php else: ?>
+            <li class="nav-item"><a class="<?php echo navClass('login', $activePage); ?>" href="login.php">Login</a></li>
+            <li class="nav-item"><a class="<?php echo navClass('register', $activePage); ?>" href="register.php">Register</a></li>
+          <?php endif; ?>
         </ul>
       </div>
     </div>
