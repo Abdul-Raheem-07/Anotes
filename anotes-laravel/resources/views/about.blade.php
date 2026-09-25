@@ -1,0 +1,11 @@
+@extends('layouts.app')
+
+@section('title', 'About ANotes')
+
+@section('content')
+<div class="container public-page">
+    <section class="public-section pb-2"><div class="public-section-heading"><span class="eyebrow">About ANotes</span><h1 class="public-hero h-auto d-block py-0" style="min-height: 0; font-size: clamp(2.3rem, 5vw, 4rem);">A simple place for<br><em>clearer days.</em></h1><p>ANotes is a lightweight personal productivity app built to help you capture ideas, organize daily tasks, and stay on top of what matters.</p></div></section>
+    <section class="story-grid public-section"><div class="info-panel"><span class="eyebrow mb-2">The idea</span><h3>Less friction between you and the work.</h3><p>Jot down quick notes the moment an idea strikes, keep a running list of things to do, and set timely reminders so nothing important slips through the cracks.</p><p>Whether it is a shopping list, a study plan, or a deadline you cannot afford to miss, ANotes keeps it organized in one simple place, accessible whenever you need it.</p></div><div class="info-panel"><div class="public-feature-icon"><i class="bi bi-compass"></i></div><h3>Built for momentum</h3><p>ANotes keeps the interface calm and the important actions close, helping you move from thought to next step without unnecessary noise.</p></div></section>
+    <section class="public-section"><div class="public-section-heading"><span class="eyebrow">What it helps with</span><h2>Tools that respect your attention.</h2></div><div class="public-feature-grid"><article class="public-feature"><div class="public-feature-icon"><i class="bi bi-journal-text"></i></div><h3>Note taking</h3><p>Create, edit, and manage notes in seconds with a clear, focused workspace.</p></article><article class="public-feature"><div class="public-feature-icon"><i class="bi bi-check2-square"></i></div><h3>Task organization</h3><p>Keep daily tasks structured so you always know what deserves attention next.</p></article><article class="public-feature"><div class="public-feature-icon"><i class="bi bi-alarm"></i></div><h3>Timely reminders</h3><p>Schedule one-off or repeating reminders and get notified right in your browser.</p></article></div></section>
+</div>
+@endsection

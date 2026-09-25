@@ -4,7 +4,7 @@ if (!isset($activePage)) {
     $activePage = '';
 }
 
-function navClass($page, $active) {
+function navClass(string $page, string $active): string {
     return $page === $active ? 'nav-link active px-3' : 'nav-link px-3';
 }
 
